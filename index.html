@@ -1,52 +1,18 @@
-<!DOCTYPE html>
-<html lang="pt-br">
-<head>
-<meta charset="utf-8">
-<title>Viewer 3D</title>
-<meta name="viewport" content="width=device-width, initial-scale=1">
-
-<style>
-html, body { margin:0; height:100%; background:#111; overflow:hidden; }
-#app { width:100%; height:100%; }
-#msg {
-  position:fixed;
-  bottom:10px;
-  left:10px;
-  color:#ddd;
-  background:rgba(0,0,0,.5);
-  padding:6px 8px;
-  border-radius:6px;
-  font-family:system-ui;
-  font-size:12px;
-}
-</style>
-</head>
-
-<body>
-<div id="app"></div>
-<div id="msg">Carregando modelos…</div>
-
 <script type="module">
 import * as THREE from 'https://unpkg.com/three@0.150.1/build/three.module.js';
 import { OrbitControls } from 'https://unpkg.com/three@0.150.1/examples/jsm/controls/OrbitControls.js';
 import { GLTFLoader } from 'https://unpkg.com/three@0.150.1/examples/jsm/loaders/GLTFLoader.js';
 
-/* =========================
-   🔹 CONFIG SHAREPOINT
-========================= */
 const BASE_URL =
   'https://engie-my.sharepoint.com/personal/df6433_engie_com/Documents/Documentos/GitHUB/';
 
-/* =========================
-   🔹 CENA
-========================= */
 const container = document.getElementById('app');
 const msg = document.getElementById('msg');
 
 const scene = new THREE.Scene();
 scene.background = new THREE.Color(0x111111);
 
-const camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 10000);
+const camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 100000);
 camera.position.set(5, 5, 5);
 
 const renderer = new THREE.WebGLRenderer({ antialias: true });
@@ -61,29 +27,25 @@ scene.add(dir);
 const controls = new OrbitControls(camera, renderer.domElement);
 controls.enableDamping = true;
 
-/* =========================
-   🔹 MODELOS
-========================= */
 const models = [
   { id: 'base', file: 'model.glb' },
   { id: 'vp120', file: 'DE-4450.87-6260-120-VP-001.glb' },
   { id: 'vp140', file: 'DE-4450.87-6260-140-VP-001.glb' },
   { id: 'vp150', file: 'DE-4450.87-6260-150-VP-001.glb' },
   { id: 'vp180', file: 'DE-4450.87-6260-180-VP-003.glb' },
-  { id: 'vp190', file: 'DE-4450.87-6260-200-VP-001.glb' },
-  { id: 'vp200', file: 'DE-4450.87-6260-560-VP-001.glb' }
+  { id: 'vp200', file: 'DE-4450.87-6260-200-VP-001.glb' },
+  { id: 'vp560', file: 'DE-4450.87-6260-560-VP-001.glb' }
 ];
 
 const loader = new GLTFLoader();
 const loadedModels = {};
 let loadedCount = 0;
 
-/* =========================
-   🔹 LOAD
-========================= */
 models.forEach(m => {
+  const url = BASE_URL + encodeURIComponent(m.file);
+
   loader.load(
-    BASE_URL + m.file,
+    url,
     gltf => {
       loadedModels[m.id] = gltf.scene;
       scene.add(gltf.scene);
@@ -98,15 +60,12 @@ models.forEach(m => {
     },
     undefined,
     err => {
-      console.error('Erro ao carregar:', m.file, err);
-      msg.textContent = 'Erro ao carregar modelos';
+      console.error('Erro ao carregar:', url, err);
+      msg.textContent = 'Erro ao carregar um ou mais modelos';
     }
   );
 });
 
-/* =========================
-   🔹 CÂMERA
-========================= */
 function fitCameraToModels() {
   const box = new THREE.Box3();
   Object.values(loadedModels).forEach(obj => box.expandByObject(obj));
@@ -131,21 +90,10 @@ function fitCameraToModels() {
   camera.updateProjectionMatrix();
 }
 
-/* =========================
-   🔹 LOOP
-========================= */
 function animate() {
   requestAnimationFrame(animate);
   controls.update();
   renderer.render(scene, camera);
 }
 animate();
-
-window.addEventListener('resize', () => {
-  camera.aspect = window.innerWidth / window.innerHeight;
-  camera.updateProjectionMatrix();
-  renderer.setSize(window.innerWidth, window.innerHeight);
-});
 </script>
-</body>
-</html>
