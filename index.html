@@ -1,99 +1,92 @@
-<script type="module">
-import * as THREE from 'https://unpkg.com/three@0.150.1/build/three.module.js';
-import { OrbitControls } from 'https://unpkg.com/three@0.150.1/examples/jsm/controls/OrbitControls.js';
-import { GLTFLoader } from 'https://unpkg.com/three@0.150.1/examples/jsm/loaders/GLTFLoader.js';
 
-const BASE_URL =
-  'https://engie-my.sharepoint.com/personal/df6433_engie_com/Documents/Documentos/GitHUB/';
-
-const container = document.getElementById('app');
-const msg = document.getElementById('msg');
-
-const scene = new THREE.Scene();
-scene.background = new THREE.Color(0x111111);
-
-const camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 100000);
-camera.position.set(5, 5, 5);
-
-const renderer = new THREE.WebGLRenderer({ antialias: true });
-renderer.setSize(window.innerWidth, window.innerHeight);
-container.appendChild(renderer.domElement);
-
-scene.add(new THREE.HemisphereLight(0xffffff, 0x333333, 1));
-const dir = new THREE.DirectionalLight(0xffffff, 0.8);
-dir.position.set(10, 10, 10);
-scene.add(dir);
-
-const controls = new OrbitControls(camera, renderer.domElement);
-controls.enableDamping = true;
-
-const models = [
-  { id: 'base', file: 'model.glb' },
-  { id: 'vp120', file: 'DE-4450.87-6260-120-VP-001.glb' },
-  { id: 'vp140', file: 'DE-4450.87-6260-140-VP-001.glb' },
-  { id: 'vp150', file: 'DE-4450.87-6260-150-VP-001.glb' },
-  { id: 'vp180', file: 'DE-4450.87-6260-180-VP-003.glb' },
-  { id: 'vp200', file: 'DE-4450.87-6260-200-VP-001.glb' },
-  { id: 'vp560', file: 'DE-4450.87-6260-560-VP-001.glb' }
-];
-
-const loader = new GLTFLoader();
-const loadedModels = {};
-let loadedCount = 0;
-
-models.forEach(m => {
-  const url = BASE_URL + encodeURIComponent(m.file);
-
-  loader.load(
-    url,
-    gltf => {
-      loadedModels[m.id] = gltf.scene;
-      scene.add(gltf.scene);
-
-      loadedCount++;
-      msg.textContent = `Carregando modelos (${loadedCount}/${models.length})`;
-
-      if (loadedCount === models.length) {
-        fitCameraToModels();
-        msg.textContent = 'Modelos carregados';
-      }
-    },
-    undefined,
-    err => {
-      console.error('Erro ao carregar:', url, err);
-      msg.textContent = 'Erro ao carregar um ou mais modelos';
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+  <meta charset="utf-8">
+  <title>Viewer 3D – Teste SharePoint</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <script type="importmap">
+  {
+    "imports": {
+      "three": "https://unpkg.com/three@0.150.1/build/three.module.js"
     }
-  );
-});
+  }
+  </script>
+  <style>
+    html, body { margin:0; height:100%; background:#111; overflow:hidden; }
+    #app { width:100%; height:100%; }
+    #msg {
+      position:fixed;
+      bottom:10px;
+      left:10px;
+      color:#ddd;
+      background:rgba(0,0,0,.5);
+      padding:6px 8px;
+      border-radius:6px;
+      font-family:system-ui;
+      font-size:12px;
+    }
+  </style>
+</head>
+<body>
+  <div id="app"></div>
+  <div id="msg">Carregando modelo…</div>
+  <script type="module">
+    import * as THREE from 'three';
+    import { OrbitControls } from 'https://unpkg.com/three@0.150.1/examples/jsm/controls/OrbitControls.js';
+    import { GLTFLoader } from 'https://unpkg.com/three@0.150.1/examples/jsm/loaders/GLTFLoader.js';
 
-function fitCameraToModels() {
-  const box = new THREE.Box3();
-  Object.values(loadedModels).forEach(obj => box.expandByObject(obj));
+    const container = document.getElementById('app');
+    const msg = document.getElementById('msg');
 
-  const size = new THREE.Vector3();
-  box.getSize(size);
+    const scene = new THREE.Scene();
+    scene.background = new THREE.Color(0x111111);
 
-  const center = new THREE.Vector3();
-  box.getCenter(center);
+    const camera = new THREE.PerspectiveCamera(60, window.innerWidth/window.innerHeight, 0.1, 10000);
+    camera.position.set(5,5,5);
 
-  controls.target.copy(center);
+    const renderer = new THREE.WebGLRenderer({ antialias:true });
+    renderer.setSize(window.innerWidth, window.innerHeight);
+    container.appendChild(renderer.domElement);
 
-  const distance = size.length() * 0.8;
-  camera.position.set(
-    center.x + distance,
-    center.y + distance,
-    center.z + distance
-  );
+    scene.add(new THREE.HemisphereLight(0xffffff, 0x333333, 1));
+    const dir = new THREE.DirectionalLight(0xffffff, 0.8);
+    dir.position.set(10,10,10);
+    scene.add(dir);
 
-  camera.near = distance / 100;
-  camera.far = distance * 100;
-  camera.updateProjectionMatrix();
-}
+    const controls = new OrbitControls(camera, renderer.domElement);
+    controls.enableDamping = true;
 
-function animate() {
-  requestAnimationFrame(animate);
-  controls.update();
-  renderer.render(scene, camera);
-}
-animate();
-</script>
+    const loader = new GLTFLoader();
+
+    // 🔹 Troque pelo link público do seu arquivo GLB no SharePoint
+    const MODEL_URL = 'https://engie-my.sharepoint.com/personal/df6433_engie_com/Documents/Documentos/GitHUB/DE-4450.87-6260-560-VP-001.glb';
+
+    loader.load(
+      MODEL_URL,
+      (gltf) => {
+        scene.add(gltf.scene);
+        msg.textContent = 'Modelo carregado';
+      },
+      undefined,
+      (err) => {
+        msg.textContent = 'Erro ao carregar GLB';
+        console.error(err);
+      }
+    );
+
+    function animate(){
+      requestAnimationFrame(animate);
+      controls.update();
+      renderer.render(scene, camera);
+    }
+    animate();
+
+    window.addEventListener('resize', ()=>{
+      camera.aspect = window.innerWidth/window.innerHeight;
+      camera.updateProjectionMatrix();
+      renderer.setSize(window.innerWidth, window.innerHeight);
+    });
+  </script>
+</body>
+</html>
